@@ -78,13 +78,13 @@ def file_to_base64(path: str) -> str:
     return base64.b64encode(data).decode()
 
 
-def send_image_file(image_path: str, number: str):
+def send_image_file(image_path: str, number: str, caption: str = ""):
     """Envia uma imagem em base64 para o número especificado.
 
     Args:
         image_path (str): Caminho parcial ou completo da imagem.
         number (str): Numero do destinatário no formato internacional (ex: 5511999999999).
-
+        caption (str): Legenda da imagem.
     Returns:
         dict: Resposta da API.
     """
@@ -103,7 +103,7 @@ def send_image_file(image_path: str, number: str):
         # Nome do arquivo que irá aparecer no WhatsApp
         "fileName": Path(image_path).name,
         # Legenda da imagem
-        "caption": "Only image",
+        "caption": caption,
     }
 
     response = requests.post(url, json=payload, headers=headers)
