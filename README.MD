@@ -24,9 +24,11 @@ Este projeto utiliza Docker Compose para orquestrar três serviços principais:
 ## 📁 Estrutura do Projeto
 
 ```
-evolutionAPI/
+evolution/
 ├── docker-compose.yml    # Configuração dos containers Docker
-├── evotest.py           # Arquivo de testes e exemplos de uso
+├── evotest.py           # Funções para envio de mensagens e arquivos
+├── filetypes.py         # Definição de tipos de mídia e MIME types
+├── webhook.py           # Handler para webhooks da Evolution API
 ├── .env                 # Variáveis de ambiente (criar)
 └── README.MD            # Este arquivo
 ```
@@ -54,12 +56,25 @@ Arquivo de orquestração dos containers Docker que define:
 
 #### `evotest.py`
 
-Script Python com funções para testar a API. Inclui:
+Script Python com funções para interagir com a Evolution API:
 
-- `send_text()`: Envia mensagens de texto
-- `send_image_url()`: Envia imagens via URL
-- `send_image_file()`: Envia imagens de arquivos locais
-- `file_to_base64()`: Converte arquivos para base64
+- `send_text(message, contact)`: Envia mensagens de texto
+- `send_file_url(url_file, contact, ...)`: Envia arquivos via URL (imagens, documentos, etc)
+- `send_file(path, contact, ...)`: Envia arquivos locais em base64
+- `file_to_base64(path)`: Função auxiliar para converter arquivos em base64
+
+#### `filetypes.py`
+
+Define os tipos de mídia suportados e seus MIME types:
+
+- **PDF**: `Type("document", "application/pdf")`
+- **XLSX**: `Type("document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")`
+- **PNG**: `Type("image", "image/png")`
+- **JPEG/JPG**: `Type("image", "image/jpeg")`
+
+#### `webhook.py`
+
+Handler para processar webhooks recebidos da Evolution API (para eventos em tempo real).
 
 ## 🔧 Pré-requisitos
 
@@ -161,6 +176,82 @@ Para parar e remover os volumes (apaga todos os dados):
 docker-compose down -v
 ```
 
+## 🧪 Exemplos de Uso
+
+### Configuração Inicial
+
+As variáveis de ambiente são carregadas do arquivo `.env`:
+
+```python
+from evotest import send_text, send_file, send_file_url
+```
+
+### 1. Enviar mensagem de texto
+
+```python
+send_text("Olá, mundo!", "5511999999999")
+```
+
+**Parâmetros:**
+
+- `message` (str): Texto da mensagem
+- `contact` (str): Número do destinatário (formato internacional)
+
+### 2. Enviar arquivo via URL
+
+```python
+from filetypes import FileTypes
+
+send_file_url(
+    url_file="https://example.com/documento.pdf",
+    contact="5511999999999",
+    mediatype=FileTypes.PDF.mediatype,
+    mimetype=FileTypes.PDF.mimetype,
+    caption="Documento importante",
+    filename="documento.pdf"
+)
+```
+
+**Parâmetros:**
+
+- `url_file` (str): URL do arquivo a enviar
+- `contact` (str): Número do destinatário
+- `mediatype` (str): Tipo de mídia (document, image, etc)
+- `mimetype` (str): MIME type do arquivo
+- `caption` (str): Legenda/descrição do arquivo
+- `filename` (str): Nome que aparecerá no WhatsApp
+
+### 3. Enviar arquivo local
+
+```python
+from filetypes import FileTypes
+
+send_file(
+    path="./seu-arquivo.png",
+    contact="5511999999999",
+    caption="Foto da empresa",
+    mediatype=FileTypes.PNG.mediatype,
+    mimetype=FileTypes.PNG.mimetype
+)
+```
+
+**Parâmetros:**
+
+- `path` (str): Caminho local do arquivo
+- `contact` (str): Número do destinatário
+- `caption` (str): Legenda do arquivo
+- `mediatype` (str): Tipo de mídia
+- `mimetype` (str): MIME type do arquivo
+
+### 4. Converter arquivo para base64
+
+```python
+from evotest import file_to_base64
+
+encoded = file_to_base64("./imagem.jpg")
+print(encoded)  # String base64 do arquivo
+```
+
 ## 🧪 Arquivo de Teste
 
 O arquivo `evotest.py` contém exemplos práticos de uso da API.
@@ -176,38 +267,17 @@ headers = {
 instance = "nome-da-sua-instancia"     # Mesma do .env
 ```
 
-### Funções disponíveis
-
-#### 1. Enviar mensagem de texto
-
-```python
-send_text("Olá, mundo!", "5511999999999")
-```
-
-#### 2. Enviar imagem via URL
-
-```python
-send_image_url(
-    url_file="https://example.com/imagem.jpg",
-    number="5511999999999",
-    caption="Minha imagem",
-    filename="foto.jpg"
-)
-```
-
-#### 3. Enviar imagem de arquivo local
-
-```python
-send_image_file("./minha_imagem.png", "5511999999999")
-```
-
 ### Como executar
 
 ```bash
 python evotest.py
 ```
 
-> 💡 **Dica**: Descomente os exemplos no final do arquivo para testar rapidamente!
+> 💡 **Dica**: Utilize as funções importando do arquivo:
+
+```python
+from evotest import send_text, send_file, send_file_url, file_to_base64
+```
 
 ## 📚 Documentação
 
