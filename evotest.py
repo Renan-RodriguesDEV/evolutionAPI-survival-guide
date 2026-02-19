@@ -17,6 +17,24 @@ base_url = os.getenv(
     "BASE_URL", "http://localhost:8080"
 )  # Altere para o URL do seu servidor Evolution API
 instance = os.getenv("INSTANCE_NAME", "your-instance-name")
+TIMEOUT = 120
+
+
+def get_instances():
+    """Verifica sua instancia da evolution API
+
+    Returns:
+        tuple: tuple: Status code e JSON response da API.
+    """
+    url = f"{base_url}/instance/fetchInstances"
+
+    payload = {}
+    headers = {"apikey": os.getenv("AUTHENTICATION_API_KEY", "your-api-key")}
+
+    response = requests.get(url, headers=headers, data=payload)
+
+    print(response.json())
+    return response.status_code, response.json()
 
 
 def send_text(message: str, contact: str):
@@ -27,12 +45,12 @@ def send_text(message: str, contact: str):
         contact (str): Numero do destinatário no formato internacional (ex: 5511999999999).
 
     Returns:
-        dict: Resposta da API.
+        tuple: Status code e JSON response da API.
     """
     url = f"{base_url}/message/sendText/{instance}"
     # Corpo da requisição em dict que será passado como JSON
     payload = {"number": contact, "text": message}
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.post(url, json=payload, headers=headers, timeout=TIMEOUT)
     print(response.json())
     return response.status_code, response.json()
 
@@ -55,7 +73,7 @@ def send_file_url(
         caption (str): Legenda do arquivo.
         filename (str): Nome do arquivo que irá aparecer no WhatsApp.
     Returns:
-        dict: Resposta da API.
+        tuple: Status code e JSON response da API.
     """
     url = f"{base_url}/message/sendMedia/{instance}"
     payload = {
@@ -71,7 +89,7 @@ def send_file_url(
         "fileName": filename,
     }
 
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.post(url, json=payload, headers=headers, timeout=TIMEOUT)
     print(response.json())
     return response.status_code, response.json()
 
@@ -107,7 +125,7 @@ def send_file(
         mediatype (str): Tipo da midia do arquivo (ex. document, image e etc). Default: FileTypes.PDF.mediatype.
         mimetype (str): Tipo da MIME do arquivo (ex. image/png, application/pdf e etc). Default: FileTypes.PDF.mimetype.
     Returns:
-        dict: Resposta da API.
+        tuple: Status code e JSON response da API.
     """
     url = f"{base_url}/message/sendMedia/{instance}"
     payload = {
@@ -122,7 +140,9 @@ def send_file(
         "fileName": Path(path).name,
         # Legenda da Arquivo
         "caption": caption,
+        # Delay
+        "delay": 3000,
     }
-    response = requests.post(url=url, json=payload, headers=headers)
+    response = requests.post(url=url, json=payload, headers=headers, timeout=TIMEOUT)
     print(response.json())
     return response.status_code, response.json()
